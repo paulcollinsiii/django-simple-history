@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import copy
 try:
     from django.apps import apps  # Django >= 1.7
+    from django.core.exceptions import AppRegistryNotReady
 except ImportError:
     apps = None
 from django.db import models
@@ -69,7 +70,10 @@ class HistoricalRecords(object):
         if apps is None:
             models.signals.class_prepared.connect(self.finalize, sender=cls)
         else:
-            app = apps.get_app_config('simple_history')
+            try:
+                app = apps.get_app_config('simple_history')
+            except AppRegistryNotReady:
+                from .apps import SimpleHistoryConfig as app
             app.models_to_finalize.append((self, cls))
 
     def add_extra_methods(self, cls):
